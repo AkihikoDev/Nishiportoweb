@@ -27,9 +27,9 @@ export default async function ContactPage() {
 
   return (
     <div className="container px-4 py-12 mx-auto animate-in">
-      <h1 className="text-4xl font-bold mb-8">Contact Me</h1>
+      <h1 className="text-3xl font-bold mb-8 text-center md:text-left">Contact Me</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
           <p className="text-lg mb-6">
             I'd love to hear from you! Fill out the form and I'll get back to you as soon as possible.

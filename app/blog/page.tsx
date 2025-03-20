@@ -1,9 +1,9 @@
 import Link from "next/link"
-import Image from "next/image"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { formatDate } from "@/lib/utils/date-formatter"
 import type { BlogPost } from "@/lib/types"
+import { SafeImage } from "@/components/ui/safe-image"
 
 export const metadata = {
   title: "Blog | Personal Branding Website",
@@ -21,7 +21,7 @@ export default async function BlogPage() {
 
   return (
     <div className="container px-4 py-12 mx-auto animate-in">
-      <h1 className="text-4xl font-bold mb-8">Blog</h1>
+      <h1 className="text-3xl font-bold mb-8 text-center md:text-left">Blog</h1>
 
       {posts && posts.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -30,12 +30,7 @@ export default async function BlogPage() {
               <Card className="h-full overflow-hidden hover:shadow-md transition-shadow">
                 {post.cover_image_url && (
                   <div className="relative h-48 w-full">
-                    <Image
-                      src={post.cover_image_url || "/placeholder.svg"}
-                      alt={post.title}
-                      fill
-                      className="object-cover"
-                    />
+                    <SafeImage src={post.cover_image_url} alt={post.title} fill className="object-cover" />
                   </div>
                 )}
                 <CardContent className="p-6">

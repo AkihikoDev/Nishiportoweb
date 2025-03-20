@@ -14,6 +14,11 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 import type { Project } from "@/lib/types"
 import { toast } from "@/hooks/use-toast"
 
+// Add these imports at the top
+import { isValidImageUrl, getSafeImageUrl } from "@/lib/utils/image-validator"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import Image from "next/image"
+
 interface ProjectFormProps {
   initialData?: Project
   isNew?: boolean
@@ -23,6 +28,11 @@ export function ProjectForm({ initialData, isNew = false }: ProjectFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  // Then add these state variables in the component
+  const [validatingImage, setValidatingImage] = useState(false)
+  const [imageError, setImageError] = useState<string | null>(null)
+  const [previewImage, setPreviewImage] = useState<string | null>(initialData?.image_url || null)
 
   const [formData, setFormData] = useState({
     title: initialData?.title || "",
@@ -34,9 +44,42 @@ export function ProjectForm({ initialData, isNew = false }: ProjectFormProps) {
     is_featured: initialData?.is_featured || false,
   })
 
+  // Add this function to validate the image URL
+  const validateImageUrl = async () => {
+    if (!formData.image_url) {
+      setPreviewImage(null)
+      return
+    }
+
+    setValidatingImage(true)
+    setImageError(null)
+
+    try {
+      const isValid = await isValidImageUrl(formData.image_url)
+
+      if (isValid) {
+        setPreviewImage(formData.image_url)
+      } else {
+        setImageError("The provided URL is not a valid image. Please enter a direct link to an image file.")
+        setPreviewImage(null)
+      }
+    } catch (error) {
+      setImageError("Failed to validate image URL. Please check the URL and try again.")
+      setPreviewImage(null)
+    } finally {
+      setValidatingImage(false)
+    }
+  }
+
+  // Update the handleChange function to clear image error
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+
+    // Clear image error when image_url is changed
+    if (name === "image_url") {
+      setImageError(null)
+    }
   }
 
   const handleSwitchChange = (checked: boolean) => {
@@ -159,15 +202,48 @@ export function ProjectForm({ initialData, isNew = false }: ProjectFormProps) {
             />
           </div>
 
+          {/* Update the image URL input field in the form */}
           <div className="space-y-2">
             <Label htmlFor="image_url">Image URL</Label>
-            <Input
-              id="image_url"
-              name="image_url"
-              value={formData.image_url || ""}
-              onChange={handleChange}
-              placeholder="https://example.com/image.jpg"
-            />
+            <div className="flex gap-2">
+              <Input
+                id="image_url"
+                name="image_url"
+                value={formData.image_url || ""}
+                onChange={handleChange}
+                placeholder="https://example.com/image.jpg"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={validateImageUrl}
+                disabled={validatingImage || !formData.image_url}
+              >
+                {validatingImage ? "Checking..." : "Test URL"}
+              </Button>
+            </div>
+            {imageError && (
+              <Alert variant="destructive" className="mt-2">
+                <AlertDescription>{imageError}</AlertDescription>
+              </Alert>
+            )}
+            {previewImage && (
+              <div className="mt-4">
+                <div className="relative h-40 w-full rounded-md overflow-hidden border border-muted">
+                  <Image
+                    src={getSafeImageUrl(previewImage) || "/placeholder.svg"}
+                    alt="Image preview"
+                    fill
+                    className="object-cover"
+                    onError={() => {
+                      setImageError("Failed to load image. Please check the URL and try again.")
+                      setPreviewImage(null)
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+            <p className="text-sm text-muted-foreground">Use a direct link to an image file (JPG, PNG, WebP).</p>
           </div>
 
           <div className="space-y-2">

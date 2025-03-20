@@ -16,7 +16,7 @@ export async function SiteFooter() {
             &copy; {new Date().getFullYear()} Personal Brand. All rights reserved.
           </p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex flex-wrap justify-center gap-4">
           {socialLinks?.map((social: SocialLink) => (
             <a
               key={social.id}
