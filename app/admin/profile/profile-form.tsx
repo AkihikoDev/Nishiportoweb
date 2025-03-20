@@ -1,31 +1,39 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import Image from "next/image"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { getSupabaseBrowserClient } from "@/lib/supabase/client"
-import { isValidImageUrl, getSafeImageUrl } from "@/lib/utils/image-validator"
-import type { Profile } from "@/lib/types"
-import { toast } from "@/hooks/use-toast"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { isValidImageUrl, getSafeImageUrl } from "@/lib/utils/image-validator";
+import type { Profile } from "@/lib/types";
+import { toast } from "@/hooks/use-toast";
 
 interface ProfileFormProps {
-  initialData?: Profile
+  initialData?: Profile;
 }
 
 export function ProfileForm({ initialData }: ProfileFormProps) {
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
-  const [validatingImage, setValidatingImage] = useState(false)
-  const [imageError, setImageError] = useState<string | null>(null)
-  const [previewImage, setPreviewImage] = useState<string | null>(initialData?.avatar_url || null)
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [validatingImage, setValidatingImage] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(
+    initialData?.avatar_url || null
+  );
 
   const [formData, setFormData] = useState({
     name: initialData?.name || "",
@@ -35,61 +43,69 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
     resume_url: initialData?.resume_url || "",
     email: initialData?.email || "",
     location: initialData?.location || "",
-  })
+  });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
 
     // Clear image error when avatar_url is changed
     if (name === "avatar_url") {
-      setImageError(null)
+      setImageError(null);
     }
-  }
+  };
 
   // Validate image URL when avatar_url changes
   const validateImageUrl = async () => {
     if (!formData.avatar_url) {
-      setPreviewImage(null)
-      return
+      setPreviewImage(null);
+      return;
     }
 
-    setValidatingImage(true)
-    setImageError(null)
+    setValidatingImage(true);
+    setImageError(null);
 
     try {
-      const isValid = await isValidImageUrl(formData.avatar_url)
+      const isValid = await isValidImageUrl(formData.avatar_url);
 
       if (isValid) {
-        setPreviewImage(formData.avatar_url)
+        setPreviewImage(formData.avatar_url);
       } else {
-        setImageError("The provided URL is not a valid image. Please enter a direct link to an image file.")
-        setPreviewImage(null)
+        setImageError(
+          "The provided URL is not a valid image. Please enter a direct link to an image file. Kamu bisa menggunakan Imgur untuk upload PNG, JPG, atau Webp"
+        );
+        setPreviewImage(null);
       }
     } catch (error) {
-      setImageError("Failed to validate image URL. Please check the URL and try again.")
-      setPreviewImage(null)
+      setImageError(
+        "Failed to validate image URL. Please check the URL and try again."
+      );
+      setPreviewImage(null);
     } finally {
-      setValidatingImage(false)
+      setValidatingImage(false);
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
 
     // Validate image URL before saving
     if (formData.avatar_url) {
-      const isValid = await isValidImageUrl(formData.avatar_url)
+      const isValid = await isValidImageUrl(formData.avatar_url);
       if (!isValid) {
-        setImageError("The provided URL is not a valid image. Please enter a direct link to an image file.")
-        setIsLoading(false)
-        return
+        setImageError(
+          "The provided URL is not a valid image. Please enter a direct link to an image file. Kamu bisa menggunakan Imgur untuk upload PNG, JPG, atau Webp"
+        );
+        setIsLoading(false);
+        return;
       }
     }
 
     try {
-      const supabase = getSupabaseBrowserClient()
+      const supabase = getSupabaseBrowserClient();
 
       if (initialData?.id) {
         // Update existing profile
@@ -99,9 +115,9 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
             ...formData,
             updated_at: new Date().toISOString(),
           })
-          .eq("id", initialData.id)
+          .eq("id", initialData.id);
 
-        if (error) throw error
+        if (error) throw error;
       } else {
         // Create new profile
         const { error } = await supabase.from("profiles").insert([
@@ -110,27 +126,27 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           },
-        ])
+        ]);
 
-        if (error) throw error
+        if (error) throw error;
       }
 
       toast({
         title: "Profile saved",
         description: "Your profile has been updated successfully.",
-      })
+      });
 
-      router.refresh()
+      router.refresh();
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message || "Something went wrong. Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <form onSubmit={handleSubmit}>
@@ -141,19 +157,42 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Name</Label>
-            <Input id="name" name="name" value={formData.name} onChange={handleChange} required />
+            <Input
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+            />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="title">Title/Position</Label>
-            <Input id="title" name="title" value={formData.title} onChange={handleChange} required />
-            <p className="text-sm text-muted-foreground">E.g., "Full Stack Developer" or "UX Designer"</p>
+            <Input
+              id="title"
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
+              required
+            />
+            <p className="text-sm text-muted-foreground">
+              E.g., "Artist" or "UX Designer"
+            </p>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="bio">Bio</Label>
-            <Textarea id="bio" name="bio" value={formData.bio} onChange={handleChange} rows={6} required />
-            <p className="text-sm text-muted-foreground">Supports Markdown formatting</p>
+            <Textarea
+              id="bio"
+              name="bio"
+              value={formData.bio}
+              onChange={handleChange}
+              rows={6}
+              required
+            />
+            <p className="text-sm text-muted-foreground">
+              Supports Markdown formatting
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -189,15 +228,19 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
                     fill
                     className="object-cover"
                     onError={() => {
-                      setImageError("Failed to load image. Please check the URL and try again.")
-                      setPreviewImage(null)
+                      setImageError(
+                        "Failed to load image. Please check the URL and try again."
+                      );
+                      setPreviewImage(null);
                     }}
                   />
                 </div>
               </div>
             )}
             <p className="text-sm text-muted-foreground">
-              Use a direct link to an image file (JPG, PNG, WebP). For best results, use a square image.
+              Use a direct link to an image file (JPG, PNG, WebP). For best
+              results, use a square image. Disarankan menggunakan Imgur untuk
+              Uploading gambar.
             </p>
           </div>
 
@@ -242,6 +285,5 @@ export function ProfileForm({ initialData }: ProfileFormProps) {
         </CardFooter>
       </Card>
     </form>
-  )
+  );
 }
-
